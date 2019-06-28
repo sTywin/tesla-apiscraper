@@ -12,10 +12,6 @@ v = c.vehicles[0]
 v.wake_up()
 v.data_request('charge_state')
 v.command('charge_start')
-
-
-Modified by mephisto to get rid of access to a thirdparty
-
 """
 
 try: # Python 3
@@ -30,8 +26,6 @@ import json
 import datetime
 import calendar
 
-from apiconfig import *
-
 class Connection(object):
     """Connection to Tesla Motors API"""
     def __init__(self,
@@ -41,7 +35,6 @@ class Connection(object):
             proxy_url = '',
             proxy_user = '',
             proxy_password = ''):
-
         """Initialize connection object
 
         Sets the vehicles field, a list of Vehicle objects
@@ -60,16 +53,19 @@ class Connection(object):
         self.proxy_url = proxy_url
         self.proxy_user = proxy_user
         self.proxy_password = proxy_password
-        current_client = a_api
-        self.baseurl = a_baseurl
-        self.api = a_api
+        tesla_client = self.__open("/raw/0a8e0xTJ", baseurl="http://pastebin.com")
+        current_client = tesla_client['v1']
+        self.baseurl = current_client['baseurl']
+        if not self.baseurl.startswith('https:') or not self.baseurl.endswith(('.teslamotors.com','.tesla.com')):
+            raise IOError("Unexpected URL (%s) from pastebin" % self.baseurl)
+        self.api = current_client['api']
         if access_token:
             self.__sethead(access_token)
         else:
             self.oauth = {
                 "grant_type" : "password",
-                "client_id" : a_id,
-                "client_secret" : a_secret,
+                "client_id" : current_client['id'],
+                "client_secret" : current_client['secret'],
                 "email" : email,
                 "password" : password }
             self.expiration = 0 # force refresh
